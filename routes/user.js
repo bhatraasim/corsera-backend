@@ -56,7 +56,7 @@ userRouter.get('/pucharses',userMiddleware, async  (req, res) => {
         userId
     })
 
-    const courseData =  await courseMode.find({
+    const courseData =  await courseModel.find({
         _id :{$in :purchases.map(x=>x.courseId)}
     })
     res.json({
