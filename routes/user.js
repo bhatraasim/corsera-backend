@@ -52,7 +52,7 @@ userRouter.post('/signin', async (req, res) => {
 
 userRouter.get('/pucharses',userMiddleware, async  (req, res) => {
     const userId = req.userId
-    const purchases = await purchaserModel.findOne({
+    const purchases = await courseModel.findOne({
         userId
     })
 
