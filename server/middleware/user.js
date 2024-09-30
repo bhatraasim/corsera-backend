@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken")
-const { JWT_USER_PASSWORD } = require("../config") 
+const { JWT_USER_PASSWORD } = require("../server/config") 
 
 function userMiddleware(req,res,next){
     const token = req.header.token

@@ -2,9 +2,9 @@ require('dotenv').config()
 const express = require('express')
 const app = express()
 const mongoose = require("mongoose")
-const {userRouter } = require("./routes/user")
-const {courseRouter } = require("./routes/courses")
-const {adminRouter} = require("./routes/admin")
+const {userRouter } = require("../routes/user")
+const {courseRouter } = require("../routes/courses")
+const {adminRouter} = require("../routes/admin")
 app.use(express.json())
 
 

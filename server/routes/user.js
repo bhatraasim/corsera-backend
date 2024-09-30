@@ -1,9 +1,9 @@
 const { Router } = require("express");
 const userRouter = Router()
-const {userModel, purchaserModel, courseModel} = require("../db")
+const {userModel, purchaserModel, courseModel} = require("../server/db")
 
 const jwt = require("jsonwebtoken")
-const {JWT_USER_PASSWORD} = require("../config");
+const {JWT_USER_PASSWORD} = require("../server/config");
 const { userMiddleware } = require("../middleware/user");
 
 
