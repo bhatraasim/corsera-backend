@@ -1,5 +1,7 @@
 const { Router } = require("express");
 const adminRouter = Router();
+const bcrypt = require('bcrypt');
+const { z } = require('zod');
 const { adminModel, courseModel } = require("../db");
 const jwt = require("jsonwebtoken");
 // brcypt, zod, jsonwebtoken
@@ -7,14 +9,16 @@ const  { JWT_ADMIN_PASSWORD } = require("../config");
 const { adminMiddleware } = require("../middleware/admin");
 
 
+
 adminRouter.post("/signup", async function(req, res) {
     const { email, password, firstName, lastName } = req.body; // TODO: adding zod validation
-    // TODO: hash the password so plaintext pw is not stored in the DB
+    const hasedPassword = await bcrypt.hash(password, 10);
 
+    console.log("Hashed Password:", hashedPassword);
     // TODO: Put inside a try catch block
     await adminModel.create({
         email: email,
-        password: password,
+        password: hasedPassword,
         firstName: firstName, 
         lastName: lastName
     })
@@ -25,15 +29,15 @@ adminRouter.post("/signup", async function(req, res) {
 })
 
 adminRouter.post("/signin", async function(req, res) {
-    const { email, password } = req.body;
+    const { email, password} = req.body;
+    const passwordMatch = await bcrypt.compare(password, admin.password)
 
     // TODO: ideally password should be hashed, and hence you cant compare the user provided password and the database password
     const admin = await adminModel.findOne({
-        email: email,
-        password: password
+        email: email
     });
 
-    if (admin) {
+    if (admin && passwordMatch) {
         const token = jwt.sign({
             id: admin._id
         }, JWT_ADMIN_PASSWORD);
