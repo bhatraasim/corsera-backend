@@ -1,2 +1,2 @@
 # Coursera-app
-this is a course selling app 
+This is just the backend of a course selling app.
