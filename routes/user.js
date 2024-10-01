@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const bcrypt = require('bcrypt');
+const { z } = require("zod")
 const { userModel, purchaseModel, courseModel } = require("../db");
 const jwt = require("jsonwebtoken");
 const { JWT_USER_PASSWORD } = require("../config");
@@ -8,20 +9,47 @@ const { userMiddleware } = require("../middleware/user");
 const userRouter = Router();
 
 userRouter.post("/signup", async function (req, res) {
-    const { email, password, firstName, lastName } = req.body; // TODO: adding zod validation
+
+
+    const requireBody = z.object({
+        email:z.string().email(),
+        password:z.string().min(6).max(100),
+        firstName:z.string().min(3).max(100),
+        lastName:z.string().min(3).max(100)
+    })
+    const parsedDataSucess = requireBody.safeParse(req.body);
+
+    if (!parsedDataSucess.success) {
+        return res.status(400).json({
+            message: "Invalid input",
+            errors: parsedDataSucess.error.errors
+        });
+    }
+    
+
+   
+
+    const { email, password, firstName, lastName } = parsedDataSucess.data;
+
     const hasedPassword = await bcrypt.hash(password, 10);
 
-    // TODO: Put inside a try catch block
-    await userModel.create({
+    try{
+        await userModel.create({
         email: email,
         password: hasedPassword,
         firstName: firstName,
         lastName: lastName
     })
-
     res.json({
         message: "Signup succeeded"
     })
+    }catch(error){
+        res.status(500).json({
+            message: "Error occurred during signup",
+            error: error.message
+        });
+    }
+    
 })
 
 userRouter.post("/signin", async function (req, res) {
