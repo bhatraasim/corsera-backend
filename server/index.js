@@ -9,7 +9,6 @@ app.use(express.json())
 
 
 async function main() {
-    // should be using dotenv
     await mongoose.connect(process.env.MONGO_URL)
 
     app.listen(3000, () => {

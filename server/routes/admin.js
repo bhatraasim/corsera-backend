@@ -4,16 +4,18 @@ const {adminModel, courseModel} = require("../db")
 const jwt = require("jsonwebtoken")
 const {JWT_ADMIN_PASSWORD} = require("../config");
 const { adminMiddleware } = require("../middleware/admin");
+const bcrypt = require('bcrypt');
 
 
 adminRouter.post('/signup', async (req, res) => {
     const {email,password,firstName,lastName} = req.body //adding zod validation
-    //ading the jsonwebtoken
+    const hasedPassword = await bcrypt.hash(password, 10);
+
  
     //put inside a try catch block
     await adminModel.create({
         email,
-        password,
+        hasedPassword,
         firstName,
         lastName
     })
@@ -26,11 +28,13 @@ adminRouter.post('/signup', async (req, res) => {
 adminRouter.post('/signin', async (req, res) => {
     const {email,password} = req.body
 
-    //here use the bycrpt library to hash the password that will be stored in the db.
+    const passwordMatch = bcrypt.compare(password, user.password);
+
     const admin = await adminModel.findOne({
         email:email,
-        password:password
+        password:passwordMatch
     })
+
     if(admin){
         const token = jwt.sign({
             id:admin._id,
