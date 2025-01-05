@@ -1,6 +1,6 @@
 const { Router } = require("express");
-const bcrypt = require('bcrypt');
-const { z } = require("zod")
+const bcrypt = require("bcrypt");
+const { z } = require("zod");
 const { userModel, purchaseModel, courseModel } = require("../db");
 const jwt = require("jsonwebtoken");
 const { JWT_USER_PASSWORD } = require("../config");
@@ -9,99 +9,95 @@ const { userMiddleware } = require("../middleware/user");
 const userRouter = Router();
 
 userRouter.post("/signup", async function (req, res) {
+  const requireBody = z.object({
+    email: z.string().email(),
+    password: z.string().min(6).max(100),
+    firstName: z.string().min(3).max(10),
+    lastName: z.string().min(3).max(10),
+  });
+  const parsedDataSucess = requireBody.safeParse(req.body);
 
+  if (!parsedDataSucess.success) {
+    return res.status(400).json({
+      message: "Invalid input",
+      errors: parsedDataSucess.error.errors,
+    });
+  }
 
-    const requireBody = z.object({
-        email:z.string().email(),
-        password:z.string().min(6).max(100),
-        firstName:z.string().min(3).max(100),
-        lastName:z.string().min(3).max(100)
-    })
-    const parsedDataSucess = requireBody.safeParse(req.body);
+  const { email, password, firstName, lastName } = parsedDataSucess.data;
 
-    if (!parsedDataSucess.success) {
-        return res.status(400).json({
-            message: "Invalid input",
-            errors: parsedDataSucess.error.errors
-        });
-    }
-    
+  const hasedPassword = await bcrypt.hash(password, 10);
 
-   
-
-    const { email, password, firstName, lastName } = parsedDataSucess.data;
-
-    const hasedPassword = await bcrypt.hash(password, 10);
-
-    try{
-        await userModel.create({
-        email: email,
-        password: hasedPassword,
-        firstName: firstName,
-        lastName: lastName
-    })
+  try {
+    await userModel.create({
+      email: email,
+      password: hasedPassword,
+      firstName: firstName,
+      lastName: lastName,
+    });
     res.json({
-        message: "Signup succeeded"
-    })
-    }catch(error){
-        res.status(500).json({
-            message: "Error occurred during signup",
-            error: error.message
-        });
-    }
-    
-})
+      message: "Signup succeeded",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error occurred during signup",
+      error: error.message,
+    });
+  }
+});
 
 userRouter.post("/signin", async function (req, res) {
-    const { email, password } = req.body;
-        
+  const { email, password } = req.body;
 
-    // TODO: ideally password should be hashed, and hence you cant compare the user provided password and the database password
-    const user = await userModel.findOne({
-        email: email
-    }); 
-    const passwordMatch = await bcrypt.compare(password, user.password)
+  // TODO: ideally password should be hashed, and hence you cant compare the user provided password and the database password
+  const user = await userModel.findOne({
+    email: email,
+  });
+  const passwordMatch = bcrypt.compare(password, user.password);
 
-    if (user && passwordMatch) {
-        const token = jwt.sign({
-            id: user._id,
-        }, JWT_USER_PASSWORD);
+  if (user && passwordMatch) {
+    const token = jwt.sign(
+      {
+        id: user._id,
+      },
+      JWT_USER_PASSWORD
+    );
 
-        // Do cookie logic
-
-        res.json({
-            token: token
-        })
-    } else {
-        res.status(403).json({
-            message: "Incorrect credentials"
-        })
-    }
-})
-
-userRouter.get("/purchases", userMiddleware, async function (req, res) {
-    const userId = req.userId;
-
-    const purchases = await purchaseModel.find({
-        userId,
-    });
-
-    let purchasedCourseIds = [];
-
-    for (let i = 0; i < purchases.length; i++) {
-        purchasedCourseIds.push(purchases[i].courseId)
-    }
-
-    const coursesData = await courseModel.find({
-        _id: { $in: purchasedCourseIds }
-    })
+    // Do cookie logic
 
     res.json({
-        purchases,
-        coursesData
-    })
-})
+      token: token,
+    });
+  } else {
+    res.status(403).json({
+      message: "Incorrect credentials",
+    });
+  }
+});
+
+userRouter.get("/purchases", userMiddleware, async function (req, res) {
+  const userId = req.userId;
+
+  const purchases = await purchaseModel.find({
+    userId,
+  });
+
+  let purchasedCourseIds = [];
+
+  for (let i = 0; i < purchases.length; i++) {
+    purchasedCourseIds.push(purchases[i].courseId);
+  }
+
+  const coursesData = await courseModel.find({
+    _id: { $in: purchasedCourseIds },
+  });
+
+  res.json({
+    purchases,
+    coursesData,
+  });
+});
 
 module.exports = {
-    userRouter: userRouter
-}
+  userRouter: userRouter,
+};
