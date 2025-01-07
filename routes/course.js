@@ -18,14 +18,25 @@ courseRouter.post("/purchase", userMiddleware, async function(req, res) {
     })
 })
 
-courseRouter.get("/preview", async function(req, res) {
+// courseRouter.get("/preview", userMiddleware, async function(req, res) {
     
-    const courses = await courseModel.find({});
+//     const courses = await courseModel.find({});
 
-    res.json({
-        courses
-    })
-})
+//     res.json({
+//         courses
+//     })
+// })
+
+courseRouter.get("/preview", async function(req, res) {
+    try {
+        const courses = await courseModel.find()
+        res.status(200).json({ courses });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to fetch purchased courses." });
+    }
+});
+
 
 module.exports = {
     courseRouter: courseRouter
