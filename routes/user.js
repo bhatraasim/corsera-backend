@@ -74,26 +74,37 @@ userRouter.post("/signin", async function (req, res) {
 });
 
 userRouter.get("/purchases", userMiddleware, async function (req, res) {
-  const userId = req.userId;
+  try {
+    const userId = req.userId;
+  
+    const purchases = await purchaseModel.find({userId}).select(`courseId -_id`);
 
-  const purchases = await purchaseModel.find({
-    userId,
-  });
-
-  let purchasedCourseIds = [];
-
-  for (let i = 0; i < purchases.length; i++) {
-    purchasedCourseIds.push(purchases[i].courseId);
-  }
-
+    if (purchases.length) {
+      return res.status(200).json({
+        message: "No purchased courses found.",
+        purchases: [],
+        coursesData: [],
+    })
+    }
+  
+    let purchasedCourseIds = purchases.map(purchases=>purchases.courseId);
   const coursesData = await courseModel.find({
-    _id: { $in: purchasedCourseIds },
-  });
+    _id:{ $in:purchasedCourseIds}
+  })
+  
+    res.json({
+      purchases,
+      coursesData,
+    });
+  } catch (error) {
+    console.error('Error fetching purchased courses:', error);
+        return res.status(500).json({
+            message: "An error occurred while fetching purchased courses.",
+            error: error.message,
+          })
+    }
 
-  res.json({
-    purchases,
-    coursesData,
-  });
+
 });
 
 module.exports = {
